@@ -28,11 +28,18 @@ function collectRepository(set=new RepositorySet(), item) {
   set.addRepository(r);
 }
 
+function toString(arr) {
+  if(arr == undefined) ""
+  else arr.join(',')
+}
+
 export async function queryCommits(octokit, r = new Repository()) {
   await iterateCommits(octokit, r.commitsUrl, (c)=>{
     var commit = new Commit();
     commit.message = c.commit.message;
     commit.url = c.url;
+    commit.parents = c.parents == undefined ? [] : c.parents.map(e=>e.url)
+    commit.prevCommit = c.parents
     r.commits.push(commit);
   })
   return r.commits;
@@ -53,6 +60,8 @@ export async function queryChangedFiles(octokit, c = new Commit()) {
       file.contentsUrl = f.contents_url;
       file.patch = f.patch;
       file.status = f.status;
+      file.curCommit = c.url;
+      file.prevCommit = c.parents.toString();
       c.files.push(file);
     }
   } else {
@@ -121,11 +130,14 @@ function wrapData(data) {
     return data.items;
 }
 
-export async function searchFiles(octokit, repoList = [], isCandidate = (file = new File()) => true) {
+export async function searchFiles(octokit, repoList = [], isCandidate = (file = new File()) => true, actionPerRepo = async (fileList = []) => {}) {
   var focusedFiles = [];
   for(var repo of repoList) {
+    var filesInRepo = []
     console.log('search files in repo :>> ', repo.fullname);
-    await searchFilesFromRepository(octokit, repo, focusedFiles, isCandidate);
+    await searchFilesFromRepository(octokit, repo, filesInRepo, isCandidate);
+    await actionPerRepo(filesInRepo)
+    focusedFiles.concat(filesInRepo);
   }
   return focusedFiles;
 }

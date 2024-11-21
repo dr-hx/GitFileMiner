@@ -65,10 +65,21 @@ async function initializeDatabase(pathToDB = "", tables = [['my_table','id INTEG
 export async function openRepositoryMinerDB(path = "") {
     var db = await initializeDatabase(path, [
         ['Repo', 'fullname TEXT PRIMARY KEY, homeurl TEXT, baseuml TEXT, commitsurl TEXT, stars INTEGER'],
-        ['File', 'contentsurl TEXT PRIMARY KEY, filename TEXT, bloburl TEXT, patch TEXT, status TEXT']
+        ['File', 'contentsurl TEXT PRIMARY KEY, filename TEXT, bloburl TEXT, patch TEXT, status TEXT, curcommit TEXT, prevcommit TEXT']
     ]);
 
     return db
+}
+
+export async function saveRepository(db, repo = new Repository()) {
+    const stmt = db.prepare("INSERT INTO Repo VALUES (?, ?, ?, ?, ?)");  
+    await new Promise((resolve, reject) => {
+        stmt.run(repo.fullname, repo.homeUrl, repo.baseUrl, repo.commitsUrl, repo.stars, (err) => {
+            if (err) reject(err);
+            else resolve();
+        });
+    });
+    stmt.finalize();
 }
 
 export async function saveRepositoryList(db, repoList = []) {
@@ -85,10 +96,10 @@ export async function saveRepositoryList(db, repoList = []) {
 }
 
 export async function saveFileList(db, fileList = []) {
-    const stmt = db.prepare("INSERT INTO File VALUES (?, ?, ?, ?, ?)");  
+    const stmt = db.prepare("INSERT INTO File VALUES (?, ?, ?, ?, ?, ?, ?)");  
     await new Promise((resolve, reject) => {
         for(var file of fileList) {
-            stmt.run(file.contentUrl, file.filename, file.blobUrl, file.patch, file.status, (err) => {  
+            stmt.run(file.contentsUrl, file.filename, file.blobUrl, file.patch, file.status, file.curCommit, file.prevCommit, (err) => {  
               if (err) reject(err);  
               else resolve();  
             });  

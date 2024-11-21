@@ -35,6 +35,7 @@ export class RepositorySet {
 export class Commit {
     message = "";
     url = "";
+    parents = []
     files = [];
 }
 
@@ -44,4 +45,6 @@ export class File {
     contentsUrl = ""
     patch = ""
     status = ""
+    curCommit = ""
+    prevCommit = ""
 }

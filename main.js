@@ -20,12 +20,19 @@ for(var r of repoSet.getRepositories()) {
   }
 }
 
-var candidates = await searchFiles(octokit, toExplore, (file) => {
-  return file.status === "modified" && file.filename.endsWith('.j2');
-})
-
 await saveRepositoryList(db, toExplore)
-await saveFileList(db, candidates)
+
+console.log('%d new repositories will be explored', toExplore.length);
+
+var candidates = await searchFiles(octokit, toExplore, 
+  (file) => {
+    var patch = file.patch == undefined ? "" : file.patch;
+    return file.status === "modified" && file.filename.endsWith('.j2') && patch.search(/{%\s*if|for|elif|else|macro|call\s+/) >= 0;
+  },
+  async (fileList) => {
+    await saveFileList(db, fileList)
+  }
+)
 
 db.close();
 
