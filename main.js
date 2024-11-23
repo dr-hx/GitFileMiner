@@ -27,7 +27,7 @@ console.log('%d new repositories will be explored', toExplore.length);
 var candidates = await searchFiles(octokit, toExplore, 
   (file) => {
     var patch = file.patch == undefined ? "" : file.patch;
-    return file.status === "modified" && file.filename.endsWith('.j2') && patch.search(/{%\s*if|for|elif|else|macro|call\s+/) >= 0;
+    return file.status === "modified" && file.filename.endsWith('.j2') && patch.search(/{%\s*(if|for|elif|else|macro|call)\s+/) >= 0;
   },
   async (fileList) => {
     await saveFileList(db, fileList)
